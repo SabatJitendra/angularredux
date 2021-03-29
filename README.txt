@@ -232,3 +232,35 @@ export class AppModule {
     ngRedux.configureStore(rootReducer,INITIAL_STATE);
   }
 }
+At this stage also our button won't increment.We will do that in next step
+18)we have ngRedux available as constructor parameter in app.component.ts. ngRedux is an observable, subscribe to it.
+------------------------------
+app.component.ts
+------------------------------
+constructor(private ngRedux: NgRedux<IAppState>){
+  ngRedux.subscribe(() => {
+    console.log(ngRedux.getState());
+  });
+}
+With above change on click of button in UI we will see state object being logged to console with incremented counter value
+{counter: 1}//clicked once
+{counter: 2}//clicked twice
+We can use this to update counter value in UI
+-----------------------------
+app.component.ts
+-----------------------------
+export class AppComponent {
+  title = 'reduxApp';
+  counter = 0;
+
+  constructor(private ngRedux: NgRedux<IAppState>){
+    ngRedux.subscribe(() => {
+      var store = ngRedux.getState();
+      this.counter = store.counter;
+    });
+  }
+
+  increment(){    
+    this.ngRedux.dispatch({ type: INCREMENT });
+  }
+}
