@@ -1,6 +1,6 @@
-******************************************************************************************************************************************************
-Angular Redux in action
-******************************************************************************************************************************************************
+**********************************************************************************************************
+Angular-Redux in action
+**********************************************************************************************************
 1)Redux is a state management library based on flux architecture.Instead of different JS objects and data scattered across the application,redux keeps 
 data and state in a single JS object(single source of truth) called store. This way it's more manageable,maintainable and predictable.If a specific
 data is being referred in multiple places,changing single state object will result in updating the UI in all the places.This way we will avoid 
