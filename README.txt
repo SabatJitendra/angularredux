@@ -81,13 +81,18 @@ function reducer(state,action){
 npm install redux ng2-redux rxjs-compat --save
 rxjs-compat is a package used to resolve the dependency error.We don't have to do any implementation with this package
 12)Under Angular app folder add a new file store.ts
-
+---------------------------------------------------
+store.ts
+---------------------------------------------------
 export interface IAppState{}
 
 export function rootReducer(state, action){
     return state;
 }
 13)Lets go to app.module.ts and import redux based stuffs and configure it
+---------------------------------------------------------------
+app.module.ts
+---------------------------------------------------------------
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { NgRedux, NgReduxModule } from 'ng2-redux';
@@ -111,8 +116,119 @@ export class AppModule {
     ngRedux.configureStore(rootReducer,{});
   }
 }
-This completes the configuration of redux with Angular.
+This completes the configuration of redux with Angular.Now lets see how to handle actions
+14)On click of button increment the counter
+--------------------------------------
+app.component.html
+--------------------------------------
+<div>
+  <h1>
+    {{title}}
+  </h1>
+  <p>Counter: {{ counter }}</p>
+  <button (click)="increment()">Increment</button>
+</div>
+--------------------
+app.component.ts
+--------------------
+export class AppComponent {
+  title = 'reduxApp';
+  counter = 0;
+  increment(){
+    ++this.counter;//This is how we modify state in a typical Angular app.When applying Redux we can't mutate state like this directly.
+  }
+}
+We dispatch an action for every event in application. Action goes in to store.Store knows rootReducer and passes the action to rootReducer.Reducer
+looks at the action and based on the type of action,it will return a new state.Then the store will update the state internally.
+                ____________        ___________         _____________
+                |          |        |         |         |           |
+                |          |        |         |         |           |
+                |  Action  |------->|  Store  |-------->|  Reducer  |
+                |          |        |         |         |           |
+                |          |        |         |         |           |
+                ------------        -----------         -------------
+                                       /\                       |
+                                        |_______________________|
+                                            New State
+15)Changed implementation with redux version should be
+-------------------------------------------------
+app.component.ts
+-------------------------------------------------
+import { Component } from '@angular/core';
+import { NgRedux } from 'ng2-redux';
+import { IAppState } from './store';
 
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.scss']
+})
+export class AppComponent {
+  title = 'reduxApp';
+  counter = 0;
 
+  constructor(private ngRedux: NgRedux<IAppState>){}
 
+  increment(){
+    //++this.counter;
 
+    //dispatch() is taking an action 'INCREMENT'.Every time we take an action,we need to go our reducer and determine how the state will change in 
+    //response to the said action.So add case in rootReducer() to handle action type 'INCREMENT'.
+    this.ngRedux.dispatch({ type: 'INCREMENT' });
+  }
+}
+---------------------------------------
+app/store.ts
+---------------------------------------
+export interface IAppState{
+    counter: number;
+}
+
+export function rootReducer(state: IAppState, action):IAppState{
+    switch(action.type){
+        case 'INCREMENT':
+            return { counter: state.counter + 1 };
+            break;
+        default:
+            break;
+    }
+    return state;
+}
+reducer takes in a state which is of type IAppState and depending on action type returns a new state which is of type IAppState.In our app.component.ts
+we are dispatching an event 'INCREMENT', which eventually will increment a counter variable.So we have requirement of introducing a counter property to
+our IAppState which is of type number.This property will be equivalent to counter property in app.component.ts level counter variable.Now as it's part of
+IAppState, we can refer it from any where in application.Now rootReducer will simply return a brand new object with counter property incremented by 1.
+As we introduced a counter property to IAppState so code in app.module.ts would be breaking where we passed an empty object.Update that one
+-----------------------------------
+app.module.ts
+-----------------------------------
+export class AppModule { 
+  constructor(private ngRedux: NgRedux<IAppState>){
+    ngRedux.configureStore(rootReducer,{ counter: 0 });
+  }
+}
+16)in app folder add a file actions.ts.All string type values will be centrally maintained here. It will ensure less bug and better code reusability and
+maintainability.
+-------------------------------
+actions.ts
+-------------------------------
+export const INCREMENT = 'INCREMENT';
+Now refer this where ever we use string 'INCREMENT'.
+17)app.module.ts needs a initial state { counter: 0 } with some default value.Lets create a separate entry for the same in store.ts
+------------------------
+store.ts
+------------------------
+export const INITIAL_STATE: IAppState = {
+    counter: 0
+}
+Now refer this in app.module.ts
+------------------------
+app.module.ts
+------------------------
+import { IAppState, rootReducer, INITIAL_STATE } from './store';
+
+export class AppModule { 
+  constructor(private ngRedux: NgRedux<IAppState>){
+    ngRedux.configureStore(rootReducer,INITIAL_STATE);
+  }
+}
