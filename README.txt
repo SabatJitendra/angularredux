@@ -264,3 +264,41 @@ export class AppComponent {
     this.ngRedux.dispatch({ type: INCREMENT });
   }
 }
+The above implementation has a problem.The subscribe method inside constructor results in subscription.So we should handle onDestroy() life cycle hook
+to clear off memory occupied, else it will result in memory leaks.So when ever our component will destroy, we will make sure to unsubscribe from the 
+subscription.Otherwise we will have memory leaks.The 2nd problem with this approach is it's bit tedious. There is a better approach.
+19)Update app.component.ts like below
+--------------------------------------
+app.component.ts
+--------------------------------------
+import { Component } from '@angular/core';
+import { NgRedux, select } from 'ng2-redux';
+import { IAppState } from './store';
+import { INCREMENT } from './actions';
+
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.scss']
+})
+export class AppComponent {
+  title = 'reduxApp';
+  @select() counter;
+
+  constructor(private ngRedux: NgRedux<IAppState>){}
+
+  increment(){
+    //++this.counter;
+    this.ngRedux.dispatch({ type: INCREMENT });
+  }
+}
+-----------------------------
+app.component.html
+-----------------------------
+<div>
+  <h1>
+    {{title}}
+  </h1>
+  <p>Counter: {{ counter | async }}</p>
+  <button (click)="increment()">Increment</button>
+</div>
